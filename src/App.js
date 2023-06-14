@@ -17,7 +17,7 @@ const App = () => {
     const [users, setUsers] = useState([]);
     const [userIdCounter, setUserIdCounter] = useState(1);
 
-    console.log(users)
+    //console.log(users)
 
     const addUser = (user) => {
         user.id = userIdCounter;
@@ -29,13 +29,14 @@ const App = () => {
       const [books, setBooks] = useState([]);
       const [bookIdCounter, setBookIdCounter] = useState(1);
 
-      console.log(books)
+      //console.log(books)
 
       const addBook = (book) => {
         book.id = bookIdCounter;
         setBooks([...books, book]);
         setBookIdCounter((prevCounter) => prevCounter + 1);
       };
+     
 
 return (
 <BrowserRouter>
@@ -48,8 +49,8 @@ return (
           path="/registration"
           element={<RegistrationPage addUser={addUser} addBook={addBook}/>}
         />
-<Route path="/books" element={<BooksPage books={books}/>} />
-<Route path="/users" element={<UsersPage users={users} />} />
+<Route path="/users" element={<UsersPage users={users} />} />       
+<Route path="/books" element={<BooksPage books={books} setBooks={setBooks}/>} />
 <Route path="/active" element={<ActivePage />} />
 
 </Routes>

@@ -13,8 +13,8 @@ return (
 <Nav variant='underline' activeKey='/' >
 <Nav.Link as={Link} to="/">Home</Nav.Link>
 <Nav.Link as={Link} to="/registration">Registration</Nav.Link>
-<Nav.Link as={Link} to="/books">Books</Nav.Link>
 <Nav.Link as={Link} to="/users">Users</Nav.Link>
+<Nav.Link as={Link} to="/books">Books</Nav.Link>
 <Nav.Link as={Link} to="/active">Active</Nav.Link>
 </Nav>
 </Container>

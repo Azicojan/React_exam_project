@@ -1,137 +1,217 @@
-import React, {useState} from 'react';
-import { useNavigate } from 'react-router-dom';
 
-const BooksPage = (props) => {
-const [status, setStatus] = useState('available');
 
-const navigate = useNavigate();
 
-const handleBackToHome = () => {
-navigate('/');
-};
+//BooksPage.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
 
-return (
-<div>
-<h2>Books</h2>
-{props.books.length === 0 ? (
-<p>There are no books available in the e-library at the moment.</p>
-) : (
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>Author</th>
-<th>Year of Publishing</th>
-<th>Status</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-{props.books.map((book) => (
-<tr key={book.id}>
-<td>{book.id}</td>
-<td>{book.bookName}</td>
-<td>{book.bookAuthor}</td>
-<td>{book.bookYear}</td>
-<td>{status}</td>
-<td>
-<button>Edit</button>
-<button>Delete</button>
-</td>
-</tr>
-))}
-</tbody>
-</table>
-)}
-<button onClick={handleBackToHome}>Back to Home</button>
-</div>
-);
-};
-
-export default BooksPage;
- 
-/*
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-
-const BooksPage = (props) => {
+const BooksPage = ({ books, setBooks }) => {
+  //const [status, setStatus] = useState('available');
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [editedBook, setEditedBook] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromUsersPage = location.state?.fromUsersPage || false;
 
-  const handleDeleteBook = (bookId) => {
-    // Logic to delete a book
-    const updatedBooks = props.books.filter((book) => book.id !== bookId);
-    props.setBooks(updatedBooks);
-  };
 
-  const handleEditBook = (bookId) => {
-    // Logic to edit a book
-    // You can navigate to a separate edit page or open a modal/dialog to edit the book details
-    console.log('Editing book with ID:', bookId);
-  };
+  useEffect(() => {
+    const storedActiveObjects = JSON.parse(localStorage.getItem('activeObjects') || '[]');
+    const borrowedBookIds = storedActiveObjects.map(activeObject => activeObject.book.id);
+    
+
+    // Update the status of books based on borrowedBookIds
+    const updatedBooks = books.map(book => ({
+      ...book,
+      status: borrowedBookIds.includes(book.id) ? 'unavailable' : 'select'
+    }));
+
+    setBooks(updatedBooks);
+  },[]);
+
+
+
+
 
   const handleBackToHome = () => {
     navigate('/');
   };
+  
+
+const handleSelectBook = (book) => {
+
+  if (!fromUsersPage) {
+    return; // Prevent selection if not navigated from the Users page
+  }
+  
+  const user = location.state?.user;
+  const activeObject = { user, book, lendingDate: new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })};
+
+
+  const storedActiveObjects = localStorage.getItem('activeObjects');
+  if (storedActiveObjects) {
+    const existingActiveObjects = JSON.parse(storedActiveObjects);
+    const updatedActiveObjects = [...existingActiveObjects, activeObject];
+    localStorage.setItem('activeObjects', JSON.stringify(updatedActiveObjects));
+  } else {
+    const initialActiveObjects = [activeObject];
+    localStorage.setItem('activeObjects', JSON.stringify(initialActiveObjects));
+  }
+
+  setSelectedBook(book);
+
+  
+  navigate('/active');
+  console.log(activeObject)
+};
+
+
+
+
+  const handleDeleteBook = (bookId) => {
+    const updatedBooks = books.filter((book) => book.id !== bookId);
+    setBooks(updatedBooks);
+  };
+
+  const handleEditBook = (bookId) => {
+    const book = books.find((book) => book.id === bookId);
+    setEditedBook(book);
+  };
+
+  const handleSaveBook = () => {
+    const updatedBooks = books.map((book) =>
+      book.id === editedBook.id ? editedBook : book
+    );
+    setBooks(updatedBooks);
+    setEditedBook(null);
+  };
+
+ 
 
   return (
-    <div>
+    <div style={{ margin: '20px' }}>
       <h2>Books</h2>
-      {props.books.length === 0 ? (
+      {books.length === 0 ? (
         <p>There are no books available in the e-library at the moment.</p>
       ) : (
-        <table>
+        <Table responsive="sm">
           <thead>
             <tr>
               <th>ID</th>
               <th>Name</th>
               <th>Author</th>
               <th>Year of Publishing</th>
-              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {props.books.map((book) => (
+            {books.map((book) => (
               <tr key={book.id}>
                 <td>{book.id}</td>
-                <td>{book.bookName}</td>
-                <td>{book.bookAuthor}</td>
-                <td>{book.bookYear}</td>
-                <td>{book.status}</td>
                 <td>
-                  <button onClick={() => handleEditBook(book.id)}>Edit</button>
-                  <button onClick={() => handleDeleteBook(book.id)}>Delete</button>
+                  {editedBook && editedBook.id === book.id ? (
+                    <input
+                      type="text"
+                      value={editedBook.bookName}
+                      onChange={(e) =>
+                        setEditedBook({
+                          ...editedBook,
+                          bookName: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    book.bookName
+                  )}
+                </td>
+                <td>
+                  {editedBook && editedBook.id === book.id ? (
+                    <input
+                      type="text"
+                      value={editedBook.bookAuthor}
+                      onChange={(e) =>
+                        setEditedBook({
+                          ...editedBook,
+                          bookAuthor: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    book.bookAuthor
+                  )}
+                </td>
+                <td>
+                  {editedBook && editedBook.id === book.id ? (
+                    <input
+                      type="text"
+                      value={editedBook.bookYear}
+                      onChange={(e) =>
+                        setEditedBook({
+                          ...editedBook,
+                          bookYear: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    book.bookYear
+                  )}
+                </td>
+                
+                <td>
+                  {editedBook && editedBook.id === book.id ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      style={{ width: '100px' }}
+                      onClick={handleSaveBook}
+                    >
+                      Save
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        style={{ width: '100px' }}
+                        onClick={() => handleEditBook(book.id)}
+                      >
+                        Edit
+                      </Button>{' '}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        style={{ width: '100px' }}
+                        onClick={() => handleDeleteBook(book.id)}
+                      >
+                        Delete
+                      </Button>{' '}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        style={{ width: '100px' }}
+                        onClick={() => handleSelectBook(book)}
+                        disabled={!fromUsersPage || book.status === 'unavailable'}
+                      >
+                        {book.status === 'unavailable' ? 'Unavailable' : 'Select'}
+                      </Button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       )}
-      <button onClick={handleBackToHome}>Back to Home</button>
+      <Button
+        variant="success"
+        onClick={handleBackToHome}
+        style={{ marginTop: '20px' }}
+      >
+        Back to Home
+      </Button>
     </div>
   );
 };
 
 export default BooksPage;
-
-
-const handleEditBook = (bookId) => {
-  // Find the book with the specified ID
-  const bookToEdit = props.books.find((book) => book.id === bookId);
-
-  // Implement your logic to handle the book editing
-  // You can navigate to a separate edit page or open a modal/dialog to edit the book details
-  // Here's an example of updating the book's status
-  const updatedStatus = bookToEdit.status === 'available' ? 'unavailable' : 'available';
-  const updatedBooks = props.books.map((book) => {
-    if (book.id === bookId) {
-      return { ...book, status: updatedStatus };
-    }
-    return book;
-  });
-
-  // Update the books state with the edited book
-  props.setBooks(updatedBooks);
-};
-*/
